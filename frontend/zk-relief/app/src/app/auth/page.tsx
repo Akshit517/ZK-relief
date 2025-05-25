@@ -1,6 +1,7 @@
 "use client";
 
 import {useEffect, useLayoutEffect, useState} from "react";
+import {useRouter} from "next/navigation";
 import jwt_decode from "jwt-decode";
 import {GetSaltRequest, LoginResponse, UserKeyData, ZKPPayload, ZKPRequest} from "@/app/types/UsefulTypes";
 
@@ -17,7 +18,8 @@ import {toast} from "react-hot-toast";
 import { ZkLoginSignatureInputs} from "@mysten/sui.js/dist/cjs/zklogin/bcs";
 
 export default function Page() {
-
+    const router = useRouter();
+    
     const [error, setError] = useState<string | null>(null);
     const [publicKey, setPublicKey] = useState<string | null>(null);
     const [txDigest, setTxDigest] = useState<string | null>(null);
@@ -32,6 +34,15 @@ export default function Page() {
     const {suiClient} = useSui();
 
     const MINIMUM_BALANCE = 0.003;
+
+    // Navigation functions
+    const handleSubmitReport = () => {
+        router.push('/submit-report');
+    };
+
+    const handleAllCounsellors = () => {
+        router.push('/all-counsellors');
+    };
 
     async function getSalt(subject: string, jwtEncoded: string) {
         const getSaltRequest: GetSaltRequest = {
@@ -52,7 +63,7 @@ export default function Page() {
             return null;
         }
     }
-
+    
 
     function printUsefulInfo(decodedJwt: LoginResponse, userKeyData: UserKeyData) {
         console.log("iat  = " + decodedJwt.iat);
@@ -172,7 +183,6 @@ export default function Page() {
         setTransactionInProgress(false);
     }
 
-
     function getEphemeralKeyPair() {
         const userKeyData: UserKeyData = JSON.parse(localStorage.getItem("userKeyData")!);
         let ephemeralKeyPairArray = Uint8Array.from(Array.from(fromB64(userKeyData.ephemeralPrivateKey!)));
@@ -199,7 +209,6 @@ export default function Page() {
     function enoughBalance(userBalance: number) {
         return userBalance > MINIMUM_BALANCE;
     }
-
 
     //** This is just for testing purposes. DO NOT USE IN PRODUCTION */
     function getTestnetAdminSecretKey() {
@@ -243,6 +252,8 @@ export default function Page() {
 
     async function loadRequiredData(encodedJwt: string) {
         //Decoding JWT to get useful Info
+        localStorage.setItem("sui_jwt_token", encodedJwt);
+    console.log("JWT token stored in localStorage");
         const decodedJwt: LoginResponse = await jwt_decode(encodedJwt!) as LoginResponse;
 
         setSubjectID(decodedJwt.sub);
@@ -303,167 +314,208 @@ export default function Page() {
         setTransactionInProgress(false);
     }
 
-
     return (
-        <div id="cb" className="space-y-12">
-            <div className="px-4 sm:px-0">
-                <h3 className="text-base font-semibold leading-7 text-gray-900">Authenticated Area</h3>
-                <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">Login with External Provider Completed</p>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+            {/* Header */}
+            <div className="bg-white shadow-sm border-b">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between items-center py-6">
+                        <div className="flex items-center">
+                            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                            <span className="text-sm text-gray-500">Welcome back!</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-
-            <div className="mt-6 border-t border-gray-100">
-                <dl className="divide-y divide-gray-100">
-                    {userAddress ? (
-                        <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                            <dt className="text-sm font-medium leading-6 text-gray-900">User Address</dt>
-                            <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-                                <span className="mr-5">{userAddress!}</span>
-                                <span className="ml-0"><button
-                                    type="button"
-                                    className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(userAddress!)
-                                    }}
-                                >
-                                Copy
-                            </button></span>
-                            </dd>
-                        </div>
-                    ) : null}
-                    {userAddress ? (
-                        <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                            <dt className="text-sm font-medium leading-6 text-gray-900">Balance</dt>
-                            <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-                                <span className="mr-5">{userBalance.toFixed(4)} SUI</span>
-                                <span className="ml-5">
-                                <button
-                                    type="button"
-                                    className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                                    disabled={!userAddress}
-                                    onClick={() => giveSomeTestCoins(userAddress!)}
-                                >
-                                        Get Testnet Coins
-                                    </button>
-                            </span>
-                            </dd>
-                        </div>
-                    ) : null}
-                    {userSalt ? (
-                        <div>
-
-                            <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                                <dt className="text-sm font-medium leading-6 text-gray-900">User Salt</dt>
-                                <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-                                    <span className="mr-5">{userSalt}</span>
-                                </dd>
-                            </div>
-                            <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                                <dt className="text-sm font-medium leading-6 text-gray-900">Subject ID</dt>
-                                <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-                                    <span className="mr-5">{subjectID}</span>
-                                </dd>
-                            </div>
-
-
-                        </div>
-                    ) : null
-                    }
-
-                    {zkProof ? (
-                        <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                            <dt className="text-sm font-medium leading-6 text-gray-900">ZK Proof (point A)</dt>
-                            <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-                                <span className="mr-5">{zkProof?.proofPoints?.a.toString().slice(0, 30)}...</span>
-                                <span className="ml-5">
-                                <button
-                                    type="button"
-                                    className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                                    onClick={() => getZkProof(true)}
-                                >
-                                        Get new ZK Proof
-                                    </button>
-                            </span>
-                            </dd>
-                        </div>
-                    ) : null
-                    }
-
-                </dl>
-
-
-                {zkProof && enoughBalance(userBalance) ? (
-                    <div className="pt-5">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Main Action Buttons */}
+                <div className="mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <button
-                            type="submit"
-                            className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                            disabled={!userAddress}
-                            onClick={() => executeTransactionWithZKP()}
+                            onClick={handleSubmitReport}
+                            className="group relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
                         >
-                            Execute Transaction
+                            <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+                            <div className="relative z-10">
+                                <div className="mb-4">
+                                    <svg className="h-12 w-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-xl font-bold mb-2">Submit Report</h3>
+                                <p className="text-blue-100">File a new report or complaint</p>
+                            </div>
+                        </button>
+
+                        <button
+                            onClick={handleAllCounsellors}
+                            className="group relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 p-8 text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-r from-emerald-700 to-teal-700 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+                            <div className="relative z-10">
+                                <div className="mb-4">
+                                    <svg className="h-12 w-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-xl font-bold mb-2">All Counsellors</h3>
+                                <p className="text-emerald-100">Browse available counsellors</p>
+                            </div>
                         </button>
                     </div>
-                ) : null}
+                </div>
 
-            </div>
+                {/* User Details Card */}
+                <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-8">
+                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6">
+                        <h2 className="text-2xl font-bold text-white">Account Details</h2>
+                        <p className="text-indigo-100 mt-1">Your blockchain identity information</p>
+                    </div>
 
+                    <div className="p-8">
+                        <div className="space-y-6">
+                            {userAddress && (
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-900 mb-1">User Address</dt>
+                                        <dd className="text-sm text-gray-600 font-mono break-all">{userAddress}</dd>
+                                    </div>
+                                    <button
+                                        onClick={() => navigator.clipboard.writeText(userAddress)}
+                                        className="mt-3 sm:mt-0 sm:ml-4 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                                    >
+                                        <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        Copy
+                                    </button>
+                                </div>
+                            )}
 
-            {txDigest ? (
-                    <div className="flex flex-col items-center mt-5">
-                        <h3>Transaction Completed!</h3>
-                        <div id="contents" className="font-medium pb-6 pt-6">
-                            <p>TxDigest = {txDigest}</p>
+                            {userAddress && (
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-900 mb-1">Balance</dt>
+                                        <dd className="text-sm text-gray-600">{userBalance.toFixed(4)} SUI</dd>
+                                    </div>
+                                    <button
+                                        onClick={() => giveSomeTestCoins(userAddress)}
+                                        disabled={!userAddress}
+                                        className="mt-3 sm:mt-0 sm:ml-4 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        Get Testnet Coins
+                                    </button>
+                                </div>
+                            )}
+
+                            {userSalt && (
+                                <>
+                                    <div className="p-4 bg-gray-50 rounded-xl">
+                                        <dt className="text-sm font-medium text-gray-900 mb-1">User Salt</dt>
+                                        <dd className="text-sm text-gray-600 font-mono break-all">{userSalt}</dd>
+                                    </div>
+                                    <div className="p-4 bg-gray-50 rounded-xl">
+                                        <dt className="text-sm font-medium text-gray-900 mb-1">Subject ID</dt>
+                                        <dd className="text-sm text-gray-600 font-mono break-all">{subjectID}</dd>
+                                    </div>
+                                </>
+                            )}
+
+                            {zkProof && (
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-900 mb-1">ZK Proof (point A)</dt>
+                                        <dd className="text-sm text-gray-600 font-mono break-all">
+                                            {zkProof?.proofPoints?.a.toString().slice(0, 30)}...
+                                        </dd>
+                                    </div>
+                                    <button
+                                        onClick={() => getZkProof(true)}
+                                        className="mt-3 sm:mt-0 sm:ml-4 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                                    >
+                                        Get new ZK Proof
+                                    </button>
+                                </div>
+                            )}
                         </div>
-                        <div id="contents" className="font-medium pb-6">
+
+                        {zkProof && enoughBalance(userBalance) && (
+                            <div className="mt-8">
+                                <button
+                                    onClick={executeTransactionWithZKP}
+                                    disabled={!userAddress}
+                                    className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                                >
+                                    Execute Transaction
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Transaction Success */}
+                {txDigest && (
+                    <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-8">
+                        <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-8 py-6">
+                            <h3 className="text-2xl font-bold text-white">Transaction Completed!</h3>
+                        </div>
+                        <div className="p-8 text-center">
+                            <div className="mb-6">
+                                <p className="text-sm text-gray-600 mb-2">Transaction Digest:</p>
+                                <p className="font-mono text-sm bg-gray-100 p-3 rounded-lg break-all">{txDigest}</p>
+                            </div>
                             <button
-                                className="bg-gray-400 text-white px-4 py-2 rounded-md"
-                                disabled={!userAddress}
                                 onClick={() => window.open(`https://testnet.suivision.xyz/txblock/${txDigest}`, "_blank")}
+                                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
                             >
-                                See it on Explorer
+                                <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                                View on Explorer
                             </button>
                         </div>
                     </div>
-                ) :
-                null
-            }
+                )}
 
-            {transactionInProgress ? (
-                <div className="flex space-x-4 justify-center">
-                    <Blocks
-                        visible={true}
-                        height="80"
-                        width="80"
-                        ariaLabel="blocks-loading"
-                        wrapperStyle={{}}
-                        wrapperClass="blocks-wrapper"
-                    />
-                </div>
+                {/* Loading */}
+                {transactionInProgress && (
+                    <div className="flex justify-center items-center py-12">
+                        <div className="bg-white rounded-2xl shadow-xl p-8">
+                            <div className="flex flex-col items-center">
+                                <Blocks
+                                    visible={true}
+                                    height="80"
+                                    width="80"
+                                    ariaLabel="blocks-loading"
+                                    wrapperStyle={{}}
+                                    wrapperClass="blocks-wrapper"
+                                />
+                                <p className="mt-4 text-gray-600">Processing transaction...</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
-            ) : null}
-
-            {error ? (
-                <div id="header" className="pb-5 pt-6 text-red-500 text-xl">
-                    <h2>{error}</h2>
-                </div>
-
-            ) : null}
-
-            {/*{!enoughBalance(userBalance) ? (*/}
-            {/*    <div id="header2" className="pb-5 pt-6 text-red-500 text-l">*/}
-            {/*        <h2>Looks like you need some coins for testing...</h2>*/}
-            {/*        <button*/}
-            {/*            type="button"*/}
-            {/*            className="mt-5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"*/}
-            {/*            disabled={!userAddress}*/}
-            {/*            onClick={() => giveSomeTestCoins(userAddress!)}*/}
-            {/*        >*/}
-            {/*            Get Testnet Coins*/}
-            {/*        </button>*/}
-            {/*    </div>*/}
-
-            {/*) : null}*/}
-
+                {/* Error */}
+                {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+                        <div className="flex">
+                            <div className="flex-shrink-0">
+                                <svg className="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div className="ml-3">
+                                <h3 className="text-sm font-medium text-red-800">Error</h3>
+                                <p className="mt-1 text-sm text-red-700">{error}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
