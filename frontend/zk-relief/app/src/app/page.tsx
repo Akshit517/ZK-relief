@@ -147,7 +147,7 @@ export default function Home() {
             const ephemeralPublicKeyB64 = ephemeralPublicKey.toBase64();
 
             const jwt_randomness = generateRandomness();
-            const nonce = generateNonce(ephemeralPublicKey, maxEpoch, jwt_randomness);
+            const nonce = generateNonce(ephemeralPublicKey as unknown as import("@mysten/zklogin/node_modules/@mysten/sui/dist/cjs/cryptography/publickey").PublicKey, maxEpoch, jwt_randomness);
 
             console.log("current epoch = " + epoch);
             console.log("maxEpoch = " + maxEpoch);
