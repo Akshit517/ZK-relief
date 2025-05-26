@@ -8,13 +8,10 @@
         // Initialize testnet client
         const suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
 
-        // Initialize the secret keypair for paying transactions
+        
         const getSecretKeypair = () => {
-        const secretKey = process.env.NEXT_PUBLIC_SUI_PRIVATE_KEY;
+        const secretKey = "";
         try {
-            if (!secretKey) {
-                throw new Error('NEXT_PUBLIC_SUI_PRIVATE_KEY is not defined in environment variables.');
-            }
             return Ed25519Keypair.fromSecretKey(secretKey);
         } catch (error) {
             console.error('Failed to create keypair:', error);
