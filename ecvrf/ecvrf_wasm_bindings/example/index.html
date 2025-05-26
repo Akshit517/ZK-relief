@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECVRF Contract Test</title>
+</head>
+<body>
+    <h1>ECVRF Contract Inputs Test</h1>
+    <button onclick="prepareContractInputs()">Prepare Inputs for Contract</button>
+    <pre id="output"></pre>
+
+    <script type="module">
+        import init, {
+            generate_ecvrf_keypair,
+            generate_vrf_params_for_contract 
+        } from '../pkg/ecvrf_wasm_bindings.js'; 
+
+        async function prepareContractInputs() {
+            const outputEl = document.getElementById('output');
+            outputEl.textContent = 'Initializing WASM...\n';
+
+            await init(); // Initialize the WASM module
+            outputEl.textContent += 'WASM Initialized.\n\n';
+
+            try {
+                outputEl.textContent += '--- Generating Keypair ---\n';
+                const keypair = generate_ecvrf_keypair();
+                const sk_bytes = keypair.sk; // Access as property
+                // const pk_from_keypair_gen = keypair.pk; // We'll get pk from the new function
+
+                outputEl.textContent += `Keypair generated. SK length: ${sk_bytes.length}\n`;
+
+                // This is your alpha_string (input message for VRF)
+                const alpha_string_text = "crisis_report_content_or_unique_seed";
+                const alpha_string_bytes = new TextEncoder().encode(alpha_string_text);
+                outputEl.textContent += `Alpha String (Message): "${alpha_string_text}"\n`;
+                outputEl.textContent += `Alpha String (bytes length): ${alpha_string_bytes.length}\n\n`;
+
+
+                outputEl.textContent += '--- Generating VRF Parameters for Contract ---\n';
+                // Call the new function with the secret key and alpha_string
+                const contract_params = generate_vrf_params_for_contract(sk_bytes, alpha_string_bytes);
+
+                const vrf_output = contract_params.output; // Access as property
+                const vrf_proof = contract_params.proof;   // Access as property
+                const vrf_public_key = contract_params.public_key; // Access as property
+
+                outputEl.textContent += "Parameters for contract call:\n";
+                outputEl.textContent += `  1. output (VRF hash) length: ${vrf_output.length}\n`;
+                outputEl.textContent += `     output (hex): ${Array.from(vrf_output).map(b => b.toString(16).padStart(2, '0')).join('')}\n`;
+                outputEl.textContent += `  2. proof length: ${vrf_proof.length}\n`;
+                // outputEl.textContent += `     proof (hex): ${Array.from(vrf_proof).map(b => b.toString(16).padStart(2, '0')).join('')}\n`; (can be very long)
+                outputEl.textContent += `  3. alpha_string length: ${alpha_string_bytes.length} (this is your input message, pass it directly)\n`;
+                outputEl.textContent += `  4. public_key length: ${vrf_public_key.length}\n`;
+                // outputEl.textContent += `     public_key (hex): ${Array.from(vrf_public_key).map(b => b.toString(16).padStart(2, '0')).join('')}\n`;
+
+                console.log("VRF Output (gamma):", vrf_output);
+                console.log("VRF Proof:", vrf_proof);
+                console.log("VRF Public Key:", vrf_public_key);
+                console.log("Alpha String (message):", alpha_string_bytes);
+
+                outputEl.textContent += "\nThese values (vrf_output, vrf_proof, alpha_string_bytes, vrf_public_key) can now be sent to your smart contract.\n";
+            } catch (e) {
+                outputEl.textContent += `\nERROR: ${e}\nStackTrace: ${e.stack}\n`;
+                console.error("WASM Error:", e);
+            }
+        }
+        window.prepareContractInputs = prepareContractInputs;
+    </script>
+</body>
+</html>
