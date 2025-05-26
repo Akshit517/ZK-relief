@@ -72,10 +72,10 @@ const generateVRFFromWasm = async (inputString: string): Promise<VRFResult> => {
         const contract_params = generate_vrf_params_for_contract(sk_bytes, alpha_string_bytes);
 
         return {
-            publicKey: Array.from(contract_params.public_key).map(b => b.toString(16).padStart(2, '0')).join(''),
+            publicKey:"0x" + Array.from(contract_params.public_key).map(b => b.toString(16).padStart(2, '0')).join(''),
             inputString: inputString,
-            proof: Array.from(contract_params.proof).map(b => b.toString(16).padStart(2, '0')).join(''),
-            vrfOutput: Array.from(contract_params.output).map(b => b.toString(16).padStart(2, '0')).join(''),
+            proof: "0x" + Array.from(contract_params.proof).map(b => b.toString(16).padStart(2, '0')).join(''),
+            vrfOutput: "0x" + Array.from(contract_params.output).map(b => b.toString(16).padStart(2, '0')).join(''),
             rawOutput: contract_params.output,
             rawProof: contract_params.proof,
             rawPublicKey: contract_params.public_key,
@@ -184,9 +184,9 @@ type AuthStatus = 'checking' | 'authenticated' | 'not_authenticated';
 
 export default function CrisisReportWithVRF(): JSX.Element {
     const [formData, setFormData] = useState<FormData>({
-        name: "",
+        name: "Nitin",
         photo: "",
-        content: "",
+        content: "Help",
         packageId: "0xde84df2a5144b03217aaec1269b9baa3abfeb1d901444a6885b91483ee108ff7",
         counsellorHandlerId: "0x8ca12a3f40e6b6a2ac6ca70c4244e0163d71bf1ccbba6bcd3a33c8ff9cdd1a3a",
         patientHandlerId: "0xb6822983b28d472f850b8a216c9fb45b12f17af9143b09243e4d9700180ba98e",
@@ -364,7 +364,7 @@ export default function CrisisReportWithVRF(): JSX.Element {
 
         setIsGeneratingVRF(true);
         try {
-            const inputString = formData.name + formData.content + Date.now();
+            const inputString = formData.name;
             const vrfResult = await generateVRFFromWasm(inputString);
             setVrfData(vrfResult);
             setVrfGenerated(true);
@@ -375,6 +375,11 @@ export default function CrisisReportWithVRF(): JSX.Element {
             setIsGeneratingVRF(false);
         }
     };
+    function hexToBytes(hex: string): Uint8Array {
+        if (hex.startsWith('0x')) hex = hex.slice(2);
+        return Uint8Array.from(Buffer.from(hex, 'hex'));
+    }
+      
 
     const handleSubmit = async (): Promise<void> => {
         if (!vrfGenerated) {
@@ -416,26 +421,27 @@ export default function CrisisReportWithVRF(): JSX.Element {
             const photoArg = formData.photo && formData.photo.trim() !== ''
                 ? tx.pure.option('string', formData.photo.trim())
                 : tx.pure.option('string', null);
-    
+            
+            console.log(vrfData, "this is us")
+            // CRITICAL FIX: Move call with proper argument order
             tx.moveCall({
                 target: `${normalizedPackageId}::zkrelief::add_crisis_report`,
                 arguments: [
                     tx.object(normalizedCounsellorId),
                     tx.object(normalizedPatientId),
                     tx.object(normalizedClockId),
-                    tx.pure.vector('u8', Array.from(vrfData.rawOutput)),
-                    tx.pure.vector('u8', Array.from(vrfData.rawProof)),
-                    tx.pure.vector('u8', Array.from(vrfData.rawAlphaString)),
-                    tx.pure.vector('u8', Array.from(vrfData.rawPublicKey)),
-                    tx.pure.string(formData.name),
-                    photoArg, // Fixed: now properly handles Option<String>
-                    tx.pure.string(formData.content),
+                    tx.pure(hexToBytes(vrfData.vrfOutput), "vector<u8>"),               // vector<u8>
+                    tx.pure(hexToBytes(vrfData.proof), "vector<u8>"),                   // vector<u8>
+                    tx.pure(hexToBytes(vrfData.inputString), "vector<u8>"),             // vector<u8>
+                    tx.pure(hexToBytes(vrfData.publicKey), "vector<u8>"),               // vector<u8>
+                    tx.pure.string(formData.name || "default"),                   // String
+                    tx.pure.option(formData.photo || null, "string"),   // Option<String>
+                    tx.pure.string(formData.content)  
                 ]
             });
 
-            // KEY FIX: Normalize user address
-            const normalizedUserAddress = normalizeObjectId(userAddress);
-            tx.setSender(normalizedUserAddress);
+            // Set sender and gas payment
+            tx.setSender(userAddress);
 
             const gasObject = gasObjects[0];
             const gasPayment = [{
@@ -445,10 +451,20 @@ export default function CrisisReportWithVRF(): JSX.Element {
             }];
 
             tx.setGasPayment(gasPayment);
+            tx.setGasBudget(10000000); // Set explicit gas budget (10M MIST = 0.01 SUI)
 
+            // CRITICAL FIX: Use sponsor signature mode for gas payment
             const txBytes = await tx.build({ client: suiClient });
             const sponsorSignature = await secretKeypair.sign(txBytes);
             const sponsorSigBase64 = Buffer.from(sponsorSignature).toString('base64');
+
+            console.log('Transaction bytes length:', txBytes.length);
+            console.log('Gas budget:', 10000000);
+            console.log('Gas object ID:', gasObject.data?.objectId);
+            console.log('VRF output length:', vrfData.rawOutput.length);
+            console.log('VRF proof length:', vrfData.rawProof.length);
+            console.log('VRF public key length:', vrfData.rawPublicKey.length);
+            console.log('VRF alpha string length:', vrfData.rawAlphaString.length);
 
             const result = await suiClient.executeTransactionBlock({
                 transactionBlock: txBytes,
@@ -533,7 +549,7 @@ export default function CrisisReportWithVRF(): JSX.Element {
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                     <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
                         <h1 className="text-2xl font-bold text-white">Crisis Report - WASM ECVRF (FIXED)</h1>
-                        <p className="text-blue-100">Fixed string case normalization issues</p>
+                        <p className="text-blue-100">Fixed VRF verification and gas handling issues</p>
                     </div>
 
                     <div className="p-6 space-y-6">
@@ -627,6 +643,12 @@ export default function CrisisReportWithVRF(): JSX.Element {
                                     <p className="text-sm text-green-700 flex items-center">
                                         ✅ WASM VRF parameters generated successfully!
                                     </p>
+                                    <div className="mt-2 text-xs space-y-1">
+                                        <p>Output length: {vrfData.rawOutput?.length || 0} bytes</p>
+                                        <p>Proof length: {vrfData.rawProof?.length || 0} bytes</p>
+                                        <p>Public key length: {vrfData.rawPublicKey?.length || 0} bytes</p>
+                                        <p>Alpha string length: {vrfData.rawAlphaString?.length || 0} bytes</p>
+                                    </div>
                                 </div>
                             )}
                         </div>
