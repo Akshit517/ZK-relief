@@ -5,6 +5,7 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
 import { jwtToAddress } from '@mysten/sui/zklogin';
 import { decodeSuiPrivateKey } from '@mysten/sui/cryptography';
+import { toBase64 } from '@mysten/sui/utils';
 
 const suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
 
@@ -187,9 +188,9 @@ export default function CrisisReportWithVRF(): JSX.Element {
         name: "Nitin",
         photo: "",
         content: "Help",
-        packageId: "0xde84df2a5144b03217aaec1269b9baa3abfeb1d901444a6885b91483ee108ff7",
-        counsellorHandlerId: "0x8ca12a3f40e6b6a2ac6ca70c4244e0163d71bf1ccbba6bcd3a33c8ff9cdd1a3a",
-        patientHandlerId: "0xb6822983b28d472f850b8a216c9fb45b12f17af9143b09243e4d9700180ba98e",
+        packageId: "0xceff241cddcbe2baa0c0deacabb5dca3114b69fbbd0eb33b1d121db99f30b5b9",
+        counsellorHandlerId: "0x017ea194ac4ab4588807a2a9101a37c671b8498dd683ff9598b25b75db5c48f6",
+        patientHandlerId: "0x45e60d10a2bb29275b264eadb0a315fe328466e21f718691d67db1ddae4797c8",
         clockId: "0x0000000000000000000000000000000000000000000000000000000000000006"
     });
 
@@ -375,114 +376,153 @@ export default function CrisisReportWithVRF(): JSX.Element {
             setIsGeneratingVRF(false);
         }
     };
-    function hexToBytes(hex: string): Uint8Array {
-        if (hex.startsWith('0x')) hex = hex.slice(2);
-        return Uint8Array.from(Buffer.from(hex, 'hex'));
-    }
-      
+
+    // Helper function to create ephemeral keypair from stored data
+    const getEphemeralKeypair = (): Ed25519Keypair | null => {
+        if (!userKeyData?.ephemeralPrivateKey) {
+            console.error('No ephemeral private key found');
+            return null;
+        }
+        
+        try {
+            // Convert hex string to Uint8Array
+            const privateKeyHex = userKeyData.ephemeralPrivateKey.replace('0x', '');
+            const privateKeyBytes = new Uint8Array(privateKeyHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+            return Ed25519Keypair.fromSecretKey(privateKeyBytes);
+        } catch (error) {
+            console.error('Failed to create ephemeral keypair:', error);
+            return null;
+        }
+    };
 
     const handleSubmit = async (): Promise<void> => {
+        // Early validation checks BEFORE setting isSubmitting
         if (!vrfGenerated) {
             alert("Please generate VRF parameters first.");
             return;
         }
-
+    
+        // Ensure all raw VRF data components are actual Uint8Arrays
+        if (!(vrfData.rawOutput instanceof Uint8Array) ||
+            !(vrfData.rawProof instanceof Uint8Array) ||
+            !(vrfData.rawAlphaString instanceof Uint8Array) ||
+            !(vrfData.rawPublicKey instanceof Uint8Array)) {
+            alert("VRF data is not properly generated or raw byte arrays are missing. Please re-generate VRF.");
+            return;
+        }
+    
         if (!secretKeypair || !userKeyData || !jwtToken || !userAddress) {
             alert("Authentication or gas sponsor not ready.");
             return;
         }
-
+    
         if (networkStatus !== 'connected') {
             alert("Not connected to testnet. Please wait or refresh.");
             return;
         }
-
-        if (!vrfData.rawOutput || !vrfData.rawProof || !vrfData.rawAlphaString || !vrfData.rawPublicKey) {
-            alert("VRF data is not properly generated.");
-            return;
-        }
-
+    
         if (gasObjects.length === 0) {
             alert("No gas objects available for sponsor account. Please fund the sponsor account.");
             return;
         }
 
+        // Get ephemeral keypair for signing
+        const ephemeralKeypair = getEphemeralKeypair();
+        if (!ephemeralKeypair) {
+            alert("Failed to create ephemeral keypair for signing. Please re-authenticate.");
+            return;
+        }
+    
+        // Only set isSubmitting to true after all validation passes
         setIsSubmitting(true);
-
+    
         try {
             const tx = new Transaction();
+            const currentPackageId = normalizeObjectId(formData.packageId);
     
-            const normalizedPackageId = normalizeObjectId(formData.packageId);
-            const normalizedCounsellorId = normalizeObjectId(formData.counsellorHandlerId);
-            const normalizedPatientId = normalizeObjectId(formData.patientHandlerId);
-            const normalizedClockId = normalizeObjectId(formData.clockId);
+            console.log("VRF Data being used for transaction (lengths):", {
+                rawOutput: vrfData.rawOutput.length,
+                rawProof: vrfData.rawProof.length,
+                rawAlphaString: vrfData.rawAlphaString.length,
+                rawPublicKey: vrfData.rawPublicKey.length,
+            });
     
-            // FIX: Handle photo as Option<String> - correct BCS format
-            const photoArg = formData.photo && formData.photo.trim() !== ''
-                ? tx.pure.option('string', formData.photo.trim())
-                : tx.pure.option('string', null);
-            
-            console.log(vrfData, "this is us")
-            // CRITICAL FIX: Move call with proper argument order
             tx.moveCall({
-                target: `${normalizedPackageId}::zkrelief::add_crisis_report`,
+                target: `${currentPackageId}::zkrelief::add_crisis_report`,
                 arguments: [
-                    tx.object(normalizedCounsellorId),
-                    tx.object(normalizedPatientId),
-                    tx.object(normalizedClockId),
-                    tx.pure(hexToBytes(vrfData.vrfOutput), "vector<u8>"),               // vector<u8>
-                    tx.pure(hexToBytes(vrfData.proof), "vector<u8>"),                   // vector<u8>
-                    tx.pure(hexToBytes(vrfData.inputString), "vector<u8>"),             // vector<u8>
-                    tx.pure(hexToBytes(vrfData.publicKey), "vector<u8>"),               // vector<u8>
-                    tx.pure.string(formData.name || "default"),                   // String
-                    tx.pure.option(formData.photo || null, "string"),   // Option<String>
-                    tx.pure.string(formData.content)  
+                    tx.object(formData.counsellorHandlerId),
+                    tx.object(formData.patientHandlerId),
+                    tx.object(formData.clockId),
+                    tx.pure.vector('u8', vrfData.rawOutput),
+                    tx.pure.vector('u8', vrfData.rawProof),
+                    tx.pure.vector('u8', vrfData.rawAlphaString),
+                    tx.pure.vector('u8', vrfData.rawPublicKey),
+                    tx.pure.string(formData.name),
+                    tx.pure.string(formData.content)
                 ]
             });
-
-            // Set sender and gas payment
+    
             tx.setSender(userAddress);
-
+    
             const gasObject = gasObjects[0];
+            if (!gasObject?.data?.objectId || !gasObject?.data?.version || !gasObject?.data?.digest) {
+                throw new Error("Selected gas object is invalid or missing required properties.");
+            }
+    
             const gasPayment = [{
-                objectId: gasObject.data?.objectId || '',
-                version: gasObject.data?.version || '',
-                digest: gasObject.data?.digest || ''
+                objectId: gasObject.data.objectId,
+                version: gasObject.data.version,
+                digest: gasObject.data.digest
             }];
-
+    
             tx.setGasPayment(gasPayment);
-            tx.setGasBudget(10000000); // Set explicit gas budget (10M MIST = 0.01 SUI)
-
-            // CRITICAL FIX: Use sponsor signature mode for gas payment
+            tx.setGasBudget(1000000000); 
+    
+            console.log('Building transaction...');
             const txBytes = await tx.build({ client: suiClient });
-            const sponsorSignature = await secretKeypair.sign(txBytes);
-            const sponsorSigBase64 = Buffer.from(sponsorSignature).toString('base64');
+            
+            console.log('User signing with ephemeral keypair...');
+            const userSignatureBytes = await ephemeralKeypair.sign(txBytes);
+            const userSignature = toBase64(userSignatureBytes);
+            
+            console.log('Sponsor signing...');
+            const sponsorSignatureBytes = await secretKeypair.sign(txBytes);
+            const sponsorSignature = toBase64(sponsorSignatureBytes);
 
-            console.log('Transaction bytes length:', txBytes.length);
-            console.log('Gas budget:', 10000000);
-            console.log('Gas object ID:', gasObject.data?.objectId);
-            console.log('VRF output length:', vrfData.rawOutput.length);
-            console.log('VRF proof length:', vrfData.rawProof.length);
-            console.log('VRF public key length:', vrfData.rawPublicKey.length);
-            console.log('VRF alpha string length:', vrfData.rawAlphaString.length);
-
+            // For sponsored transactions, we need to use executeTransactionBlock with multiple signatures
+            console.log('Executing sponsored transaction...');
             const result = await suiClient.executeTransactionBlock({
                 transactionBlock: txBytes,
-                signature: sponsorSigBase64,
+                signature: [
+                    userSignature,      // User's signature first
+                    sponsorSignature    // Sponsor's signature second
+                ],
                 options: {
-                    showEffects: true,
+                    showEvents: true,
                     showObjectChanges: true,
-                }
+                    showBalanceChanges: true,
+                },
             });
-
-            console.log('Transaction successful on TESTNET:', result);
-
+    
+            console.log('Transaction result:', result);
+    
+            if (result.effects?.status.status !== 'success') {
+                console.error('Transaction failed. Effects:', result.effects);
+                throw new Error(`Transaction failed with status: ${result.effects?.status.error || 'Unknown error'}. Check console for details.`);
+            }
+    
+            console.log('✅ Transaction successful on TESTNET!');
+            console.log('Transaction Digest:', result.digest);
+    
+            // Reset form data on successful submission
             setFormData({
                 ...formData,
                 name: "",
                 photo: "",
                 content: ""
             });
+    
+            // Reset VRF data
             setVrfData({
                 publicKey: "",
                 inputString: "",
@@ -494,17 +534,37 @@ export default function CrisisReportWithVRF(): JSX.Element {
                 rawAlphaString: null
             });
             setVrfGenerated(false);
-
-            alert('Crisis report submitted successfully on Testnet!');
-
+    
+            alert(`✅ Crisis report submitted successfully on Testnet!\n\nTransaction Digest: ${result.digest}`);
+    
         } catch (error) {
-            console.error("Transaction failed on testnet:", error);
-            alert(`Transaction failed: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
+            console.error("❌ Transaction submission error:", error);
+            
+            // More detailed error handling
+            let errorMessage = "Transaction failed: ";
+            if (error instanceof Error) {
+                errorMessage += error.message;
+            } else if (typeof error === 'string') {
+                errorMessage += error;
+            } else {
+                errorMessage += "Unknown error occurred";
+            }
+            
+            // Check for common error patterns
+            if (errorMessage.includes('InsufficientGas')) {
+                errorMessage += "\n\nThis appears to be a gas-related error. Please ensure the sponsor account has sufficient SUI tokens.";
+            } else if (errorMessage.includes('ObjectNotFound')) {
+                errorMessage += "\n\nOne or more object IDs may be invalid. Please check the package ID, handler IDs, and clock ID.";
+            } else if (errorMessage.includes('InvalidSignature')) {
+                errorMessage += "\n\nSignature validation failed. This may be a zkLogin authentication issue.";
+            }
+            
+            alert(errorMessage);
         } finally {
             setIsSubmitting(false);
         }
     };
-
+        
     const handleLoginRedirect = (): void => {
         window.location.href = '/';
     };
@@ -548,8 +608,8 @@ export default function CrisisReportWithVRF(): JSX.Element {
             <div className="max-w-4xl mx-auto">
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                     <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
-                        <h1 className="text-2xl font-bold text-white">Crisis Report - WASM ECVRF (FIXED)</h1>
-                        <p className="text-blue-100">Fixed VRF verification and gas handling issues</p>
+                        <h1 className="text-2xl font-bold text-white">Crisis Report - WASM ECVRF (SIGNATURE FIXED)</h1>
+                        <p className="text-blue-100">Fixed signature handling for sponsored zkLogin transactions</p>
                     </div>
 
                     <div className="p-6 space-y-6">

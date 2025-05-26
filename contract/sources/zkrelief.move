@@ -22,7 +22,6 @@ module 0x0::zkrelief {
         id: UID,
         address: address,
         name: String,
-        photo: Option<String>,
         suggested_remedy: vector<SuggestedRemedy>,
     }
 
@@ -35,7 +34,7 @@ module 0x0::zkrelief {
         id: UID,
         address: address,
         name: String,
-        photo: Option<String>,
+        photo: String,
         pending_crisis_report: VecMap<address, CrisisReport>,
     }
 
@@ -52,14 +51,13 @@ module 0x0::zkrelief {
         counsellor_id: ID,
         address: address,
         name: String,
-        photo: Option<String>,
+        photo: String,
     }
 
     public struct AllCounsellorDetailsEvent has copy, drop {
         address: vector<address>,
         name: vector<String>,
-        photo: vector<Option<String>>,
-        pending_crisis_report: vector<VecMap<address, CrisisReport>>,
+        photo: vector<String>
     }
 
     public struct CounsellorCountEvent has copy, drop {
@@ -115,7 +113,7 @@ module 0x0::zkrelief {
         handler: &mut CounsellorHandler, 
         address: address, 
         name: String, 
-        photo: Option<String>,
+        photo: String,
         ctx: &mut TxContext
     ) {
         let counsellor = Counsellor {
@@ -164,7 +162,6 @@ module 0x0::zkrelief {
         alpha_string: vector<u8>,
         public_key: vector<u8>,
         name: String,
-        photo: Option<String>,
         content: String,
         ctx: &mut TxContext
     ) {
@@ -175,7 +172,6 @@ module 0x0::zkrelief {
             id: object::new(ctx),
             address: tx_context::sender(ctx),
             name: name,
-            photo: photo,
             suggested_remedy: vector::empty(),
         };
         vector::push_back(&mut patient_handler.patient_vector, patient);
@@ -236,8 +232,7 @@ module 0x0::zkrelief {
     entry public fun get_all_counsellors_details(handler: &CounsellorHandler) { 
         let mut addresses = vector::empty<address>();
         let mut names = vector::empty<String>();
-        let mut photos = vector::empty<Option<String>>();
-        let mut pending_crisis_reports = vector::empty<VecMap<address, CrisisReport>>();
+        let mut photos = vector::empty<String>();
         let len = vector::length(&handler.counsellor_vector);
         let mut i = 0;
         while (i < len) {
@@ -245,14 +240,12 @@ module 0x0::zkrelief {
             vector::push_back(&mut addresses, c.address);
             vector::push_back(&mut names, c.name);
             vector::push_back(&mut photos, c.photo);
-            vector::push_back(&mut pending_crisis_reports, c.pending_crisis_report);
             i = i + 1;
         };
         event::emit(AllCounsellorDetailsEvent {
             address: addresses,
             name: names,
-            photo: photos,
-            pending_crisis_report: pending_crisis_reports,
+            photo: photos
         });    
     }
 
