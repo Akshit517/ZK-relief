@@ -63,6 +63,7 @@ export default function Page() {
             return null;
         }
     }
+    
 
     function printUsefulInfo(decodedJwt: LoginResponse, userKeyData: UserKeyData) {
         console.log("iat  = " + decodedJwt.iat);
@@ -251,6 +252,8 @@ export default function Page() {
 
     async function loadRequiredData(encodedJwt: string) {
         //Decoding JWT to get useful Info
+        localStorage.setItem("sui_jwt_token", encodedJwt);
+    console.log("JWT token stored in localStorage");
         const decodedJwt: LoginResponse = await jwt_decode(encodedJwt!) as LoginResponse;
 
         setSubjectID(decodedJwt.sub);
