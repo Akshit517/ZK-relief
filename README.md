@@ -1,6 +1,7 @@
 # ZK-Relief: A Privacy-Preserving Mental Health Support Platform
 
-![alt text](image.png)
+![image](https://github.com/user-attachments/assets/6f0ac9c2-21ec-47ff-976f-60bf305025d1)
+
 
 ## Executive Summary
 
@@ -36,6 +37,9 @@ ZK-Relief addresses these challenges through:
 
 ## Technical Architecture
 
+<img width="1396" alt="image" src="https://github.com/user-attachments/assets/34f2b602-9044-4218-803d-8fc8f6f6513f" />
+
+
 ### Core Components
 
 * **zkLogin**: Enables users to prove their identity without disclosing personal information, ensuring anonymity.
@@ -56,6 +60,9 @@ ZK-Relief addresses these challenges through:
 
 ### Workflow
 
+<img width="563" alt="image" src="https://github.com/user-attachments/assets/84797fb9-d0a8-4bd2-a8d7-ae3944ca7bab" />
+<img width="591" alt="image" src="https://github.com/user-attachments/assets/25ae24de-931e-4062-bf10-3ef4cdbb2ec3" />
+
 1. **Initialization**: Deploy the smart contract, creating admin capabilities and shared handlers for patients and counselors.
 
 2. **Counselor Registration**: Admins add counselors by providing their address, name, and optional photo.
@@ -68,6 +75,7 @@ ZK-Relief addresses these challenges through:
 4. **Remedy Suggestion**: Assigned counselors can suggest remedies, which are recorded in the patient's profile.
 
 5. **Event Emission**: All significant actions emit events for transparency and auditing.
+ <img width="941" alt="image" src="https://github.com/user-attachments/assets/beae421e-bbfd-47d9-8151-bb4fb090e56d" />
 
 ## Real-World Impact
 
@@ -94,3 +102,4 @@ Resources:
 [1]: https://mentalhealth.inc/Mental-health-data?utm_source=chatgpt.com "MHI - Mental Health Incorporation"
 [2]: https://electroiq.com/stats/mental-health-statistics/?utm_source=chatgpt.com "Mental Health Statistics By Countries, Age and Facts [2024*]"
 [3]: https://phcnepal.com/global-mental-health-trends-stat-challenges-success-stories-and-policy-impacts/?utm_source=chatgpt.com "Global Mental Health Trends: Stat, Challenges, Success Stories, and Policy Impacts - Public Health Concern Nepal"
+
