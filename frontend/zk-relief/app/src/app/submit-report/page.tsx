@@ -488,7 +488,7 @@ export default function CrisisReportWithVRF(): JSX.Element {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
             <div className="bg-orange-600 text-white px-4 py-2 text-center text-sm mb-4 rounded">
-                <strong>🚧 TESTNET MODE:</strong> Connected to Sui Testnet - Status: {networkStatus} | WASM: {wasmReady ? '✅' : '❌'} | Gas Objects: {gasObjects.length}
+               
             </div>
 
             <div className="max-w-4xl mx-auto">
@@ -516,7 +516,7 @@ export default function CrisisReportWithVRF(): JSX.Element {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h3 className="font-semibold text-green-900">✅ zkLogin Authenticated</h3>
-                                    <p className="text-sm text-green-700">User Address: {userAddress ? `${userAddress.substring(0, 8)}...${userAddress.substring(userAddress.length - 6)}` : 'Loading...'}</p>
+                                    <p className="text-sm text-green-700"></p>
                                 </div>
                                 <div className="text-right">
                                     

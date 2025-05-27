@@ -401,13 +401,7 @@ export default function Page() {
                                         <dt className="text-sm font-medium text-gray-900 mb-1">Balance</dt>
                                         <dd className="text-sm text-gray-600">{userBalance.toFixed(4)} SUI</dd>
                                     </div>
-                                    <button
-                                        onClick={() => giveSomeTestCoins(userAddress)}
-                                        disabled={!userAddress}
-                                        className="mt-3 sm:mt-0 sm:ml-4 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        Get Testnet Coins
-                                    </button>
+                                   
                                 </div>
                             )}
 
@@ -444,13 +438,7 @@ export default function Page() {
 
                         {zkProof && enoughBalance(userBalance) && (
                             <div className="mt-8">
-                                <button
-                                    onClick={executeTransactionWithZKP}
-                                    disabled={!userAddress}
-                                    className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                                >
-                                    Execute Transaction
-                                </button>
+                                
                             </div>
                         )}
                     </div>
