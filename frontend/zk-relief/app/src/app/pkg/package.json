@@ -1,0 +1,15 @@
+{
+  "name": "ecvrf_wasm_bindings",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "ecvrf_wasm_bindings_bg.wasm",
+    "ecvrf_wasm_bindings.js",
+    "ecvrf_wasm_bindings.d.ts"
+  ],
+  "main": "ecvrf_wasm_bindings.js",
+  "types": "ecvrf_wasm_bindings.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
