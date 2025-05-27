@@ -239,7 +239,7 @@ module 0x0::zkrelief {
         let mut photos = vector::empty<Option<String>>();
         let mut pending_crisis_reports = vector::empty<VecMap<address, CrisisReport>>();
         let len = vector::length(&handler.counsellor_vector);
-        let mut i = 0;
+        let mut i = 0;  
         while (i < len) {
             let c = vector::borrow(&handler.counsellor_vector, i);
             vector::push_back(&mut addresses, c.address);
