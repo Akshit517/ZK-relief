@@ -73,7 +73,7 @@ export default function AllCounsellorsWithWallet() {
                 return;
             }
 
-            if (!PRIVATE_KEY.startsWith("suiprivkey1")) {
+            if (!PRIVATE_KEY?.startsWith("suiprivkey1")) {
                 setError("Invalid private key format. Should start with 'suiprivkey1'");
                 return;
             }
