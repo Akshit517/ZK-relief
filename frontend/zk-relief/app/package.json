@@ -3,16 +3,17 @@
   "version": "0.1.1",
   "private": true,
   "scripts": {
-    "dev": "env-cmd -f ./.env.development.local next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
+  "dev": "env-cmd -f ./.env next dev",
+  "build": "env-cmd -f ./.envnext build",
+  "start": "env-cmd -f ./.env next start",
+  "lint": "next lint"
+},
   "dependencies": {
     "@mysten/bcs": "^0.7.4",
     "@mysten/dapp-kit": "^0.16.5",
     "@mysten/sui": "^1.30.1",
     "@mysten/sui.js": "^0.44.0",
+    "@mysten/wallet-kit": "^0.8.6",
     "@mysten/zklogin": "^0.8.1",
     "@types/node": "20.4.1",
     "@vercel/kv": "^0.2.2",
