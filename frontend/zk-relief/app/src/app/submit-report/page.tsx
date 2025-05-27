@@ -29,7 +29,7 @@ let generate_vrf_params_for_contract: ((sk: Uint8Array, alpha: Uint8Array) => {
 const initWasm = async (): Promise<any> => {
     if (wasmModule) return wasmModule;
     try {
-        const wasmInit = await import('../../../../../../ecvrf/ecvrf_wasm_bindings/pkg/ecvrf_wasm_bindings.js') as WasmModule;
+        const wasmInit = await import('../pkg/ecvrf_wasm_bindings.js') as WasmModule;
         wasmModule = await wasmInit.default();
         generate_ecvrf_keypair = wasmInit.generate_ecvrf_keypair;
         generate_vrf_params_for_contract = wasmInit.generate_vrf_params_for_contract;
