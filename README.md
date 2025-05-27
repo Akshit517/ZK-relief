@@ -4,6 +4,7 @@
 
 ![ZK-Relief Banner](https://github.com/user-attachments/assets/6f0ac9c2-21ec-47ff-976f-60bf305025d1)
 
+DEMO VIDEO: https://www.youtube.com/watch?v=wd_5Alst7Us 
 
 ## Live Testnet Deployment
 
@@ -82,7 +83,6 @@ ZK-Relief addresses these challenges by combining privacy-preserving cryptograph
 ![Event Emission Diagram](https://github.com/user-attachments/assets/beae421e-bbfd-47d9-8151-bb4fb090e56d)
 
 ---
-
 ## Real-World Impact
 
 ### Improving Mental Health Support
@@ -97,6 +97,12 @@ ZK-Relief addresses these challenges by combining privacy-preserving cryptograph
 * **Global Deployment Readiness**: Applicable in diverse legal, cultural, and infrastructural settings.
 
 ---
+
+![image](https://github.com/user-attachments/assets/e2517092-3dab-41dd-8a86-8965357db8c3)
+![image](https://github.com/user-attachments/assets/d48bd0e1-e3fa-43aa-9324-478a6edc13d7)
+![image](https://github.com/user-attachments/assets/e9c638cf-5ac4-4044-a6be-98fed7e0c886)
+![image](https://github.com/user-attachments/assets/1819b0da-9d55-4d80-aab8-f14140147fcc)
+
 
 ## Conclusion
 
