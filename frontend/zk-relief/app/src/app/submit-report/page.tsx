@@ -86,8 +86,12 @@ const generateVRFFromWasm = async (inputString: string): Promise<VRFResult> => {
 };
 
 const getSecretKeypair = (): Ed25519Keypair | null => {
-    const secretKey = "suiprivkey1qqq95h395x4tqhkg9ahd3gmw9u359euxv4lkpx7w9d83axgwavhr73srrtv";
+    const secretKey = process.env.NEXT_PUBLIC_SUI_SECRET_KEY;
     try {
+        if (!secretKey) {
+            console.error('Sui secret key is not defined in environment variables.');
+            return null;
+        }
         const decodedKey = decodeSuiPrivateKey(secretKey);
         return Ed25519Keypair.fromSecretKey(decodedKey.secretKey);
     } catch (error) {
@@ -515,11 +519,7 @@ export default function CrisisReportWithVRF(): JSX.Element {
                                     <p className="text-sm text-green-700">User Address: {userAddress ? `${userAddress.substring(0, 8)}...${userAddress.substring(userAddress.length - 6)}` : 'Loading...'}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-xs text-green-600">Gas Sponsor:</p>
-                                    <p className="text-xs font-mono text-green-800">
-                                        {secretAddress ? `${secretAddress.substring(0, 8)}...${secretAddress.substring(secretAddress.length - 6)}` : 'Loading...'}
-                                    </p>
-                                    <p className="text-xs text-green-600">Gas Objects: {gasObjects.length}</p>
+                                    
                                 </div>
                             </div>
                         </div>
