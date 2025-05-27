@@ -1,107 +1,114 @@
+
+
 # ZK-Relief: A Privacy-Preserving Mental Health Support Platform
 
-![image](https://github.com/user-attachments/assets/6f0ac9c2-21ec-47ff-976f-60bf305025d1)
+![ZK-Relief Banner](https://github.com/user-attachments/assets/6f0ac9c2-21ec-47ff-976f-60bf305025d1)
 
+
+## Live Testnet Deployment
+
+ZK-Relief is deployed on the **SUI Testnet**, providing a fully functional demonstration of our decentralized mental health support ecosystem. The following deployment identifiers represent the on-chain components:
+
+* **packageId**: `0xde84df2a5144b03217aaec1269b9baa3abfeb1d901444a6885b91483ee108ff7`
+* **counsellorHandlerId**: `0x8ca12a3f40e6b6a2ac6ca70c4244e0163d71bf1ccbba6bcd3a33c8ff9cdd1a3a`
+* **patientHandlerId**: `0xb6822983b28d472f850b8a216c9fb45b12f17af9143b09243e4d9700180ba98e`
+* **clockId**: `0x0000000000000000000000000000000000000000000000000000000000000006`
+
+---
 
 ## Executive Summary
 
-**ZK-Relief** is a decentralized, privacy-centric mental health support platform built on the SUI blockchain. It leverages **zkLogin** for anonymous user authentication and **Elliptic Curve Verifiable Random Function (ECVRF)** for verifiable, unbiased assignment of crisis reports to counselors. This architecture ensures confidentiality, fairness, and verifiability, addressing critical barriers in mental health support systems.
+**ZK-Relief** is a decentralized, privacy-focused mental health support platform built on the SUI blockchain. It uses **zkLogin** for anonymous user authentication and **Elliptic Curve Verifiable Random Function (ECVRF)** for unbiased, verifiable assignment of crisis reports to counselors. This approach ensures confidentiality, fairness, and verifiability—key concerns in mental health support systems globally.
+
+---
 
 ## Problem Statement
 
 ### Global Mental Health Crisis
 
-* **Prevalence**: Approximately 1 in 8 individuals worldwide live with a mental health disorder. ([mentalhealth.inc][1])
-
-* **Economic Impact**: Mental health conditions cost the global economy an estimated **\$1 trillion annually** in lost productivity. ([Electro IQ][2])
-
-* **Treatment Gap**: In low- and middle-income countries, up to **90%** of people with mental health disorders receive no treatment. ([Public Health Concern Nepal - PHC- Nepal][3])
+* **Prevalence**: One in eight individuals worldwide live with a mental health disorder.
+* **Economic Burden**: Mental health issues cost the global economy an estimated **\$1 trillion annually** in lost productivity.
+* **Access Gap**: Up to **90%** of people in low- and middle-income countries with mental health disorders receive no treatment.
+  \[Source: Public Health Concern Nepal]
 
 ### Barriers to Seeking Help
 
-* **Stigma**: Over **60%** of individuals with mental health conditions do not seek help due to stigma and discrimination. ([mentalhealth.inc][1])
+* **Stigma**: More than **60%** of those affected do not seek help due to societal stigma and discrimination.
+* **Privacy Concerns**: Fear of being exposed or identified deters many individuals from accessing support.
+* **Resource Limitations**: A global shortage of mental health professionals restricts access to timely care.
 
-* **Privacy Concerns**: Fear of exposure deters many from accessing mental health services, especially in conservative societies.
-
-* **Resource Constraints**: Limited availability of mental health professionals and infrastructure exacerbates the accessibility issue.
+---
 
 ## Solution Overview
 
-ZK-Relief addresses these challenges through:
+ZK-Relief addresses these challenges by combining privacy-preserving cryptographic primitives with a decentralized infrastructure.
 
-* **Anonymous Authentication**: Utilizing zkLogin, users can authenticate without revealing their identity, preserving privacy.
+* **Anonymous Authentication**: Uses zkLogin to enable identity-proofing without revealing personal information.
+* **Fair Assignment**: Implements ECVRF to assign crisis reports to counselors in a verifiably random and unbiased way.
+* **Immutable Audit Trail**: All actions are recorded on-chain, ensuring transparency and tamper-proof traceability.
 
-* **Fair Assignment**: Employing ECVRF ensures that crisis reports are assigned to counselors in a verifiable and unbiased manner.
-
-* **Immutable Records**: All interactions are recorded on the SUI blockchain, ensuring transparency and tamper-proof audit trails.
+---
 
 ## Technical Architecture
 
-<img width="1396" alt="image" src="https://github.com/user-attachments/assets/34f2b602-9044-4218-803d-8fc8f6f6513f" />
-
+![Architecture Diagram](https://github.com/user-attachments/assets/34f2b602-9044-4218-803d-8fc8f6f6513f)
 
 ### Core Components
 
-* **zkLogin**: Enables users to prove their identity without disclosing personal information, ensuring anonymity.
-
-* **ECVRF**: Generates verifiable random outputs used to assign crisis reports to counselors, ensuring fairness.
-
-* **SUI Smart Contracts**: Manage user registrations, crisis reports, counselor assignments, and remedy suggestions.
+* **zkLogin**: Ensures anonymous access for patients while verifying credentials.
+* **ECVRF**: Provides cryptographically verifiable randomness for unbiased report distribution.
+* **SUI Smart Contracts**: Handle user registration, crisis report creation, counselor assignment, and remedy tracking.
 
 ### Data Structures
 
-* **CrisisReport**: Contains the report ID, content, and timestamp.
+* **CrisisReport**: Contains report ID, content, and timestamp.
+* **Patient**: Stores address, name, optional photo, and a list of suggested remedies.
+* **Counselor**: Contains counselor details and a mapping of assigned crisis reports.
+* **Handlers**: Shared objects that manage the collection of patients and counselors.
 
-* **Patient**: Stores patient information, including address, name, optional photo, and suggested remedies.
+---
 
-* **Counselor**: Holds counselor details and a map of pending crisis reports.
+## Workflow
 
-* **Handlers**: Manage collections of patients and counselors.([Public Health Concern Nepal - PHC- Nepal][3])
+![Workflow Part 1](https://github.com/user-attachments/assets/84797fb9-d0a8-4bd2-a8d7-ae3944ca7bab)
+![Workflow Part 2](https://github.com/user-attachments/assets/25ae24de-931e-4062-bf10-3ef4cdbb2ec3)
 
-### Workflow
+1. **Initialization**: The administrator deploys the contracts and initializes shared handler objects for patients and counselors.
+2. **Counselor Registration**: Admins add counselors with address, name, and optional metadata.
+3. **Crisis Report Submission**: Patients submit a report along with ECVRF output and proof. The contract verifies the proof and assigns the report based on randomness.
+4. **Remedy Suggestion**: Counselors review assigned reports and suggest remedies, which are added to the patient's record.
+5. **Event Logging**: Every major transaction emits an event to support auditability and transparency.
 
-<img width="563" alt="image" src="https://github.com/user-attachments/assets/84797fb9-d0a8-4bd2-a8d7-ae3944ca7bab" />
-<img width="591" alt="image" src="https://github.com/user-attachments/assets/25ae24de-931e-4062-bf10-3ef4cdbb2ec3" />
+![Event Emission Diagram](https://github.com/user-attachments/assets/beae421e-bbfd-47d9-8151-bb4fb090e56d)
 
-1. **Initialization**: Deploy the smart contract, creating admin capabilities and shared handlers for patients and counselors.
-
-2. **Counselor Registration**: Admins add counselors by providing their address, name, and optional photo.
-
-3. **Crisis Report Submission**:
-
-   * A patient submits a crisis report along with ECVRF output and proof.
-   * The system verifies the proof and assigns the report to a counselor based on the generated randomness.
-
-4. **Remedy Suggestion**: Assigned counselors can suggest remedies, which are recorded in the patient's profile.
-
-5. **Event Emission**: All significant actions emit events for transparency and auditing.
- <img width="941" alt="image" src="https://github.com/user-attachments/assets/beae421e-bbfd-47d9-8151-bb4fb090e56d" />
+---
 
 ## Real-World Impact
 
-### Enhancing Access to Mental Health Support
+### Improving Mental Health Support
 
-* **Anonymity**: Encourages individuals, especially in stigmatized environments, to seek help without fear of exposure.
+* **Anonymity**: Encourages individuals to seek help in privacy-sensitive or conservative environments.
+* **Fair Workload Distribution**: Prevents counselor burnout by distributing cases evenly and randomly.
+* **Transparent Operations**: Blockchain ensures all data is immutable and auditable by relevant stakeholders.
 
-* **Equitable Resource Allocation**: Ensures fair distribution of cases among counselors, preventing overload and burnout.
+### Scalability and Extensibility
 
-* **Transparency**: Immutable records foster trust among users and stakeholders.
+* **Modular System Design**: Easy to add features such as triage automation, natural language interfaces, and multilingual support.
+* **Global Deployment Readiness**: Applicable in diverse legal, cultural, and infrastructural settings.
 
-### Scalability and Adaptability
-
-* **Modular Design**: The system can be extended to include features like automated triage, multilingual support, and integration with existing healthcare systems.
-
-* **Global Applicability**: While initially targeting regions with high stigma, the platform's design allows for adaptation to various cultural and legal contexts.
+---
 
 ## Conclusion
 
-ZK-Relief presents a robust, privacy-preserving solution to the global mental health crisis. By leveraging cutting-edge cryptographic techniques and decentralized infrastructure, it addresses critical barriers to mental health support, offering a scalable and transparent platform adaptable to diverse real-world scenarios.
+ZK-Relief combines cryptographic integrity, privacy, and decentralization to create a robust platform for mental health support. By solving core challenges like stigma, unfair access, and lack of privacy, it opens the door to scalable, transparent, and trustworthy mental health services—especially for underserved populations.
 
 ---
-Resources: 
-- https://mentalhealth.inc/Mental-health-data?utm_source=chatgpt.com "MHI - Mental Health Incorporation"
-  
-- https://electroiq.com/stats/mental-health-statistics/?utm_source=chatgpt.com "Mental Health Statistics By Countries, Age and Facts [2024*]"
- 
-- https://phcnepal.com/global-mental-health-trends-stat-challenges-success-stories-and-policy-impacts/?utm_source=chatgpt.com "Global Mental Health Trends: Stat, Challenges, Success Stories, and Policy Impacts - Public Health Concern Nepal"
+
+## References
+
+* [Mental Health Incorporation - MHI](https://mentalhealth.inc/Mental-health-data?utm_source=chatgpt.com)
+* [ElectroIQ: Mental Health Statistics 2024](https://electroiq.com/stats/mental-health-statistics/?utm_source=chatgpt.com)
+* [Public Health Concern Nepal (PHC-Nepal)](https://phcnepal.com/global-mental-health-trends-stat-challenges-success-stories-and-policy-impacts/?utm_source=chatgpt.com)
+
+---
 
