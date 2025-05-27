@@ -5,7 +5,7 @@ import {useRouter} from "next/navigation";
 import jwt_decode from "jwt-decode";
 import {GetSaltRequest, LoginResponse, UserKeyData, ZKPPayload, ZKPRequest} from "@/app/types/UsefulTypes";
 
-import {genAddressSeed, getZkLoginSignature, jwtToAddress} from '@mysten/zklogin';
+import {genAddressSeed, getZkLoginSignature, jwtToAddress} from '@mysten/sui/zklogin';
 import axios from "axios";
 import {toBigIntBE} from "bigint-buffer";
 import {fromB64} from "@mysten/bcs";
@@ -73,71 +73,6 @@ export default function Page() {
         console.log("exp = " + decodedJwt.exp);
         console.log("nonce = " + decodedJwt.nonce);
         console.log("ephemeralPublicKey b64 =", userKeyData.ephemeralPublicKey);
-    }
-
-    async function executeTransactionWithZKP() {
-        setError(null);
-        setTransactionInProgress(true);
-        const decodedJwt: LoginResponse = jwt_decode(jwtEncoded!) as LoginResponse;
-        const {userKeyData, ephemeralKeyPair} = getEphemeralKeyPair();
-        const partialZkSignature = zkProof!;
-
-        if (!partialZkSignature || !ephemeralKeyPair || !userKeyData) {
-            createRuntimeError("Transaction cannot proceed. Missing critical data.");
-            return;
-        }
-
-        const txb = new TransactionBlock();
-
-        //Just a simple Demo call to create a little NFT weapon :p
-        txb.moveCall({
-            target: `0xf8294cd69d69d867c5a187a60e7095711ba237fad6718ea371bf4fbafbc5bb4b::teotest::create_weapon`,  //demo package published on testnet
-            arguments: [
-                txb.pure("Zero Knowledge Proof Axe 9000"),  // weapon name
-                txb.pure(66),  // weapon damage
-            ],
-        });
-        txb.setSender(userAddress!);
-
-        const signatureWithBytes = await txb.sign({client: suiClient, signer: ephemeralKeyPair});
-
-        console.log("Got SignatureWithBytes = ", signatureWithBytes);
-        console.log("maxEpoch = ", userKeyData.maxEpoch);
-        console.log("userSignature = ", signatureWithBytes.signature);
-
-        const addressSeed = genAddressSeed(BigInt(userSalt!), "sub", decodedJwt.sub, decodedJwt.aud);
-
-        const zkSignature: SerializedSignature = getZkLoginSignature({
-            inputs: {
-                ...partialZkSignature,
-                addressSeed: addressSeed.toString(),
-            },
-            maxEpoch: userKeyData.maxEpoch,
-            userSignature: signatureWithBytes.signature,
-        });
-
-        suiClient.executeTransactionBlock({
-            transactionBlock: signatureWithBytes.bytes,
-            signature: zkSignature,
-            options: {
-                showEffects: true
-            }
-        }).then((response) => {
-            if (response.effects?.status.status == "success") {
-                console.log("Transaction executed! Digest = ", response.digest);
-                setTxDigest(response.digest);
-                setTransactionInProgress(false);
-            } else {
-                console.log("Transaction failed! reason = ", response.effects?.status)
-                setTransactionInProgress(false);
-            }
-        }).catch((error) => {
-            console.log("Error During Tx Execution. Details: ", error);
-            if(error.toString().includes("Signature is not valid")){
-                createRuntimeError("Signature is not valid. Please generate a new one by clicking on 'Get new ZK Proof'");
-            }
-            setTransactionInProgress(false);
-        });
     }
 
     async function getZkProof(forceUpdate = false) {
@@ -225,16 +160,21 @@ export default function Page() {
             return
         }
         let adminPrivateKeyArray = Uint8Array.from(Array.from(fromB64(adminPrivateKey)));
-        const adminKeypair = Ed25519Keypair.fromSecretKey(adminPrivateKeyArray.slice(1));
+        const adminKeypair = Ed25519Keypair.fromSecretKey(adminPrivateKeyArray.slice(0, 32)) as Ed25519Keypair;
+
+        // Build transaction
         const tx = new TransactionBlock();
         const giftCoin = tx.splitCoins(tx.gas, [tx.pure(30000000)]);
-
         tx.transferObjects([giftCoin], tx.pure(address));
 
-        const res = await suiClient.signAndExecuteTransactionBlock({
-            transactionBlock: tx,
-            signer: adminKeypair,
-            requestType: "WaitForLocalExecution",
+        const bytes = await tx.build();
+
+        const { signature } = await adminKeypair.signTransactionBlock(bytes);
+
+
+        const res = await suiClient.executeTransactionBlock({
+            transactionBlock: bytes,
+            signature,
             options: {
                 showEffects: true,
             },

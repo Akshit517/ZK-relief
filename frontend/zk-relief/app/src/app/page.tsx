@@ -188,13 +188,13 @@
 
             useLayoutEffect(() => {
                 prepareLogin().then((userKeyData) => {
-                    const REDIRECT_URI = 'https://zklogin-dev-redirect.vercel.app/api/auth';
+                    const REDIRECT_URI = 'https://zkrelief-redirect.vercel.app/api/auth';
                     const customRedirectUri = getRedirectUri();
                     const params = new URLSearchParams({
                         state: new URLSearchParams({
                             redirect_uri: customRedirectUri
                         }).toString(),
-                        client_id: '595966210064-3nnnqvmaelqnqsmq448kv05po362smt2.apps.googleusercontent.com',
+                        client_id: '431984903816-mkblg3p75tjgs12ho62pas61b4m9vap1.apps.googleusercontent.com',
                         redirect_uri: REDIRECT_URI,
                         response_type: 'id_token',
                         scope: 'openid',

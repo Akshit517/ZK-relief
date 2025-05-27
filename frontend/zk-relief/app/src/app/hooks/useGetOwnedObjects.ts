@@ -1,54 +1,35 @@
-import { useWalletKit } from "@mysten/wallet-kit";
-import { useEffect, useState } from "react";
-import { useSui } from "./useSui";
+import { useCurrentAccount, useSuiClientQuery } from "@mysten/dapp-kit";
 
 export const useGetOwnedObjects = () => {
-  const { currentAccount } = useWalletKit();
-  const { suiClient } = useSui();
+  const account = useCurrentAccount();
 
-  const [data, setData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
-
-  useEffect(() => {
-    if (!!currentAccount?.address) {
-      reFetchData();
-    } else {
-      setData([]);
-      setIsLoading(false);
-      setIsError(false);
-    }
-  }, [currentAccount]);
-
-  const reFetchData = async () => {
-    setIsLoading(true);
-    suiClient
-      .getOwnedObjects({
-        owner: currentAccount?.address!,
+  // Only provide params if account exists, otherwise provide a dummy value
+  const params = account
+    ? {
+        owner: account.address,
         limit: 5,
-        options: {
-          showContent: true,
-        },
-      })
-      .then((res) => {
-        console.log(res);
-        setData(res.data);
-        setIsLoading(false);
-        setIsError(false);
-      })
-      .catch((err) => {
-        console.log(err);
-        setData([]);
-        setIsLoading(false);
-        setIsError(true);
-      });
-  };
+        options: { showContent: true },
+      }
+    : {
+        owner: "", // dummy value, won't be used if enabled: false
+        limit: 5,
+        options: { showContent: true },
+      };
 
-  return {
-    data: data.map(({ data }) => data),
+  const {
+    data,
     isLoading,
     isError,
-    reFetchData,
-    currentAccount,
+    refetch,
+  } = useSuiClientQuery("getOwnedObjects", params, {
+    enabled: !!account,
+  });
+
+  return {
+    data: data?.data?.map((obj) => obj.data) ?? [],
+    isLoading,
+    isError,
+    reFetchData: refetch,
+    currentAccount: account,
   };
 };

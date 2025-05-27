@@ -2,7 +2,7 @@ import {
   ExecuteTransactionRequestType,
   SuiClient,
   SuiTransactionBlockResponseOptions,
-} from "@mysten/sui.js/client";
+} from "@mysten/sui/client";
 
 interface ExecuteSignedTransactionBlockProps {
   signedTx: {
