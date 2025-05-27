@@ -99,7 +99,9 @@ ZK-Relief presents a robust, privacy-preserving solution to the global mental he
 
 ---
 Resources: 
-[1]: https://mentalhealth.inc/Mental-health-data?utm_source=chatgpt.com "MHI - Mental Health Incorporation"
-[2]: https://electroiq.com/stats/mental-health-statistics/?utm_source=chatgpt.com "Mental Health Statistics By Countries, Age and Facts [2024*]"
-[3]: https://phcnepal.com/global-mental-health-trends-stat-challenges-success-stories-and-policy-impacts/?utm_source=chatgpt.com "Global Mental Health Trends: Stat, Challenges, Success Stories, and Policy Impacts - Public Health Concern Nepal"
+- https://mentalhealth.inc/Mental-health-data?utm_source=chatgpt.com "MHI - Mental Health Incorporation"
+  
+- https://electroiq.com/stats/mental-health-statistics/?utm_source=chatgpt.com "Mental Health Statistics By Countries, Age and Facts [2024*]"
+ 
+- https://phcnepal.com/global-mental-health-trends-stat-challenges-success-stories-and-policy-impacts/?utm_source=chatgpt.com "Global Mental Health Trends: Stat, Challenges, Success Stories, and Policy Impacts - Public Health Concern Nepal"
 
