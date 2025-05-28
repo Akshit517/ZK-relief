@@ -188,7 +188,7 @@
 
             useLayoutEffect(() => {
                 prepareLogin().then((userKeyData) => {
-                    const REDIRECT_URI = 'https://zkrelief-redirect.vercel.app/api/auth';
+                    const REDIRECT_URI = 'https://zk-relief-five.vercel.app/auth';
                     const customRedirectUri = getRedirectUri();
                     const params = new URLSearchParams({
                         state: new URLSearchParams({
